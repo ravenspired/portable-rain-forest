@@ -62,3 +62,5 @@ if __name__ == "__main__":
 
     # Fill a rectangle
     oled.fill_rectangle(50, 50, 60, 20)
+
+    #oled.invert_display(invert=True)
