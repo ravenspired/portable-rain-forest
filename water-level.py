@@ -1,3 +1,16 @@
+# Anton Voronov, ravenspired, voronet.net
+# Water Level Monitoring System
+
+# This script combines the WaterSensor and BlinkLED classes to create a water level monitoring system.
+# The system reads the water level from a water sensor connected to an analog pin on the Raspberry Pi Pico.
+# The water level is classified as low, medium, or high based on predefined thresholds.
+# The system controls an LED connected to a digital pin on the Pico to indicate the water level.
+# The LED blinks at different rates based on the water level: slow blink for medium, fast blink for low, and off for high.
+# The system checks the water level every 5 seconds and updates the LED accordingly.
+
+# The water sensor has three wires: VCC, GND, and OUT. Connect the VCC wire to 3V3, the GND wire to GND, and the OUT wire to the analog pin (26) on the Pico.
+# The LED is connected to pin "LED" on the Pico W, which is the built-in LED on the board.  
+
 from machine import ADC, Pin
 import utime
 
@@ -5,38 +18,11 @@ from WaterSensor import WaterSensor
 from Blink import BlinkLED
 
 
-class BlinkingLED:
-    def __init__(self, pin_number, on_time=100, off_time=100):
-        self.led = Pin(pin_number, Pin.OUT)
-        self.on_time = on_time
-        self.off_time = off_time
-        self.last_toggle_time = utime.ticks_ms()
-        self.state = False
-        self.led.off()
-
-    def update(self, on_time=None, off_time=None):
-        # Use the provided on_time and off_time, or default to the object's values
-        if on_time is not None:
-            self.on_time = on_time
-        if off_time is not None:
-            self.off_time = off_time
-
-        current_time = utime.ticks_ms()
-        if self.state and utime.ticks_diff(current_time, self.last_toggle_time) >= self.on_time:
-            self.led.off()
-            self.state = False
-            self.last_toggle_time = current_time
-        elif not self.state and utime.ticks_diff(current_time, self.last_toggle_time) >= self.off_time:
-            self.led.on()
-            self.state = True
-            self.last_toggle_time = current_time
-
-
 if __name__ == "__main__":
-    water_sensor = WaterLevelSensor(26, threshold1=30000, threshold2=50000, threshold3=60000)
-    led_blinker = BlinkingLED("LED")
+    water_sensor = WaterSensor(26, threshold1=30000, threshold2=50000, threshold3=60000)
+    led_blinker = BlinkLED("LED")
     last_check_time = utime.ticks_ms()
-    water_level_check_interval = 1 * 1000  # 5 seconds
+    water_level_check_interval = 5 * 1000  # 5 seconds
     water_present = False
 
     while True:
