@@ -1,53 +1,62 @@
+"""
+A simple example that connects to the Adafruit IO MQTT server
+and publishes values that represent a sine wave
+"""
+
 import network
 import time
-import machine
+from math import sin
 from umqtt.simple import MQTTClient
 
-# WiFi Credentials
-SSID = "voronet-TEMP"
-PASSWORD = "C1derD0nut"
-
-# MQTT Broker Settings
-MQTT_BROKER = "mqtt_broker_address"
-MQTT_TOPIC = "home/water_level"
-
-# GPIO Setup
-SENSOR_PIN = 15  # Change based on your wiring
-sensor = machine.Pin(SENSOR_PIN, machine.Pin.IN)
+# Fill in your WiFi network name (ssid) and password here:
+wifi_ssid = "voronet-TEMP"
+wifi_password = "C1derD0nut"
 
 # Connect to WiFi
-def connect_wifi():
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
-    wlan.connect(SSID, PASSWORD)
+wlan = network.WLAN(network.STA_IF)
+wlan.active(True)
+wlan.connect(wifi_ssid, wifi_password)
+while wlan.isconnected() == False:
+    print('Waiting for connection...')
+    time.sleep(1)
+print("Connected to WiFi")
 
-    while not wlan.isconnected():
-        print("Connecting to WiFi...")
-        time.sleep(1)
+# Fill in your Adafruit IO Authentication and Feed MQTT Topic details
+mqtt_host = "broker.hivemq.com"
+mqtt_username = ""  # Your Adafruit IO username
+mqtt_password = ""  # Adafruit IO Key
+mqtt_publish_topic = ""  # The MQTT topic for your Adafruit IO Feed
 
-    print("Connected to WiFi:", wlan.ifconfig())
+# Enter a random ID for this MQTT Client
+# It needs to be globally unique across all of Adafruit IO.
+mqtt_client_id = "sielughrdgijdrtokgf"
 
-# Connect to MQTT Broker
-def connect_mqtt():
-    client = MQTTClient("pico_w", MQTT_BROKER)
-    client.connect()
-    print("Connected to MQTT Broker:", MQTT_BROKER)
-    return client
+# Initialize our MQTTClient and connect to the MQTT server
+mqtt_client = MQTTClient(
+        client_id=mqtt_client_id,
+        server=mqtt_host,
+        user=mqtt_username,
+        password=mqtt_password)
 
-# Main loop
-def main():
-    connect_wifi()
-    client = connect_mqtt()
+mqtt_client.connect()
 
-    while True:
-        water_level = "LOW" if sensor.value() == 0 else "HIGH"
-        print(f"Water Level: {water_level}")
-        client.publish(MQTT_TOPIC, water_level.encode())
-
-        time.sleep(5)  # Adjust the frequency of updates
-
+# Publish a data point to the Adafruit IO MQTT server every 3 seconds
+# Note: Adafruit IO has rate limits in place, every 3 seconds is frequent
+#  enough to see data in realtime without exceeding the rate limit.
+counter = 0
 try:
-    main()
+    while True:
+        # Generate some dummy data that changes every loop
+        sine = sin(counter)
+        counter += .8
+        
+        # Publish the data to the topic!
+        print(f'Publish {sine:.2f}')
+        mqtt_client.publish(mqtt_publish_topic, str(sine))
+        
+        # Delay a bit to avoid hitting the rate limit
+        time.sleep(3)
 except Exception as e:
-    print("Error:", e)
-    machine.reset()  # Restart on failure
+    print(f'Failed to publish message: {e}')
+finally:
+    mqtt_client.disconnect()
