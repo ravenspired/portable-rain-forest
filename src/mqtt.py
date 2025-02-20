@@ -1,3 +1,7 @@
+# Anton Voronov, ravenspired, voronet.net
+#MQTT class
+
+
 from umqtt.simple import MQTTClient
 
 class MQTT:
